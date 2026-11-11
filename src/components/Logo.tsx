@@ -1,0 +1,11 @@
+import { motion, useReducedMotion } from 'framer-motion'
+
+type Props = { variant?: 'full' | 'icon'; light?: boolean; className?: string; animate?: boolean }
+export default function Logo({ variant = 'full', light = false, className = '', animate = true }: Props) {
+  const reduceMotion = useReducedMotion()
+  const shouldAnimate = animate && !reduceMotion
+  const color = light ? '#fff' : 'var(--wordmark-color)'
+  if (variant === 'icon') return <motion.svg aria-label="Sift" role="img" viewBox="0 0 48 48" className={className} initial={shouldAnimate ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldAnimate ? .45 : 0 }}><rect width="48" height="48" rx="14" fill="#176b4b"/><path d="M33 14c-2.2-2.1-5.2-3.1-9-3.1-7 0-11.5 3.8-11.5 9.3 0 4.6 3.2 7 10.6 8.3 4.2.8 5.8 1.8 5.8 3.8 0 2.3-2.3 3.7-6 3.7-3.8 0-7.5-1.5-9.8-3.9l-3.7 5.2c3.2 3.1 8.1 4.9 13.4 4.9 7.7 0 12.7-4 12.7-10.1 0-5.3-3.7-7.8-11.4-9.2-4.1-.8-5.4-1.7-5.4-3.4 0-1.9 1.9-3.1 5.2-3.1 3 0 5.8 1 7.8 2.8z" fill="#fff"/><circle cx="34" cy="10" r="4" fill="#e9a83b"/></motion.svg>
+  const letters = ['S', 'f', 't']
+  return <span className={`sift-wordmark ${className}`} aria-label="Sift" role="img">{letters.slice(0, 1).map((letter) => <motion.span key={letter} aria-hidden="true" initial={shouldAnimate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldAnimate ? .4 : 0, delay: 0 }}>{letter}</motion.span>)}<motion.span aria-hidden="true" initial={shouldAnimate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldAnimate ? .4 : 0, delay: .1 }}>ı</motion.span><motion.span className="logo-dot" aria-hidden="true" initial={shouldAnimate ? { opacity: 0, y: -12, scale: .7 } : false} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 16, delay: shouldAnimate ? .34 : 0 }} />{letters.slice(1).map((letter, i) => <motion.span key={letter} aria-hidden="true" style={{ color }} initial={shouldAnimate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldAnimate ? .4 : 0, delay: shouldAnimate ? .2 + i * .08 : 0 }}>{letter}</motion.span>)}</span>
+}

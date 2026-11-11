@@ -1,0 +1,5 @@
+import { useEffect, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import Logo from './Logo'
+const messages = ['Checking the quote…', 'Comparing the requested work…', 'Preparing a draft…']
+export default function Thinking() { const [index, setIndex] = useState(0); const reduceMotion = useReducedMotion(); useEffect(() => { if (reduceMotion) return; const timer = window.setInterval(() => setIndex((value) => (value + 1) % messages.length), 750); return () => window.clearInterval(timer) }, [reduceMotion]); return <div className="thinking" role="status"><motion.div animate={reduceMotion ? undefined : { rotate: [0, -10, 10, 0], scale: [1, 1.04, 1] }} transition={{ duration: 1.6, repeat: Infinity }}><Logo variant="icon" className="thinking-logo" animate={false} /></motion.div><AnimatePresence mode="wait"><motion.p key={index} initial={reduceMotion ? false : { opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -5 }} transition={{ duration: reduceMotion ? 0 : .22 }}>{messages[index]}</motion.p></AnimatePresence></div> }
