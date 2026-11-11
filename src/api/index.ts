@@ -1,4 +1,3 @@
-import * as mock from './mock'
 import type { AnalyzeInput, AnalyzeResult, CreateInvoiceInput, CreatePaymentPlanResult, DraftType, InvoiceResult, InvoiceStatus, InvoiceSummary, LineItem } from './types'
 
 export type ApiErrorKind = 'network' | 'timeout' | 'http' | 'invalid_response'
@@ -9,8 +8,6 @@ export class ApiError extends Error {
   }
 }
 
-const useMockSetting = import.meta.env.VITE_USE_MOCK
-export const USE_MOCK = useMockSetting?.toLowerCase() !== 'false'
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -192,10 +189,8 @@ const real = {
   async createPaymentPlan(id: string, input: { installments: number }) { return normalizePaymentPlan(await requestJSON(`/invoices/${encodeURIComponent(id)}/payment-plan`, 'POST', input)) },
 }
 
-export const analyze = (input: AnalyzeInput): Promise<AnalyzeResult> => USE_MOCK ? mock.mockAnalyze(input) : real.analyze(input)
-export const createInvoice = (input: CreateInvoiceInput): Promise<InvoiceResult> => USE_MOCK ? mock.mockCreateInvoice(input) : real.createInvoice(input)
-export const listInvoices = (): Promise<InvoiceSummary[]> => USE_MOCK ? mock.mockListInvoices() : real.listInvoices()
-export const getInvoice = (id: string): Promise<InvoiceSummary> => USE_MOCK ? mock.mockGetInvoice(id) : real.getInvoice(id)
-export const createPaymentPlan = (id: string, input: { installments: number }): Promise<CreatePaymentPlanResult> => USE_MOCK ? mock.mockCreatePaymentPlan(id, input) : real.createPaymentPlan(id, input)
-export const resetMockInvoices = (): InvoiceSummary[] => USE_MOCK ? mock.resetMockInvoices() : []
-export const markMockInvoicePaid = (id: string): boolean => USE_MOCK ? mock.markMockInvoicePaid(id) : false
+export const analyze = (input: AnalyzeInput): Promise<AnalyzeResult> => real.analyze(input)
+export const createInvoice = (input: CreateInvoiceInput): Promise<InvoiceResult> => real.createInvoice(input)
+export const listInvoices = (): Promise<InvoiceSummary[]> => real.listInvoices()
+export const getInvoice = (id: string): Promise<InvoiceSummary> => real.getInvoice(id)
+export const createPaymentPlan = (id: string, input: { installments: number }): Promise<CreatePaymentPlanResult> => real.createPaymentPlan(id, input)

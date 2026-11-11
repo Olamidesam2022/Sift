@@ -11,8 +11,36 @@ import Stepper from '../components/Stepper'
 import Thinking from '../components/Thinking'
 import InvoicesDashboard from './InvoicesDashboard'
 
-const demoQuote = 'Brand identity and landing page design for $1,200. Includes one landing page, a logo suite, and two rounds of revisions.'
-const demoMessage = 'This looks great! Could you also make three social media graphics for the launch and add one more round of revisions?'
+const FLOW_STATE_KEY = 'sift.live-flow-state.v1'
+type SavedFlowState = {
+  step: number
+  quote: string
+  message: string
+  result: AnalyzeResult | null
+  items: LineItem[]
+  email: string
+  sent: { id: string; url: string } | null
+  highlightInvoiceId: string | null
+}
+
+function readSavedFlowState(): SavedFlowState | null {
+  try {
+    const value = JSON.parse(window.sessionStorage.getItem(FLOW_STATE_KEY) || 'null') as Partial<SavedFlowState> | null
+    if (!value || !Number.isInteger(value.step) || value.step! < 0 || value.step! > 3) return null
+    const result = value.result && typeof value.result === 'object' ? value.result : null
+    return {
+      step: (value.step === 1 || value.step === 2) && !result ? 0 : value.step!,
+      quote: typeof value.quote === 'string' ? value.quote : '',
+      message: typeof value.message === 'string' ? value.message : '',
+      result,
+      items: Array.isArray(value.items) ? value.items : [],
+      email: typeof value.email === 'string' ? value.email : '',
+      sent: value.sent && typeof value.sent.id === 'string' && typeof value.sent.url === 'string' ? value.sent : null,
+      highlightInvoiceId: typeof value.highlightInvoiceId === 'string' ? value.highlightInvoiceId : null,
+    }
+  } catch { return null }
+}
+
 const slideVariants = {
   initial: (direction: number) => ({ opacity: 0, x: direction * 28 }),
   animate: { opacity: 1, x: 0 },
@@ -21,21 +49,22 @@ const slideVariants = {
 
 export default function App() {
   const reduceMotion = useReducedMotion()
+  const [savedFlow] = useState(readSavedFlowState)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     try { return window.localStorage.getItem('sift.theme') === 'dark' ? 'dark' : 'light' }
     catch { return 'light' }
   })
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState(savedFlow?.step ?? 0)
   const [direction, setDirection] = useState(1)
-  const [quote, setQuote] = useState('')
-  const [message, setMessage] = useState('')
-  const [result, setResult] = useState<AnalyzeResult | null>(null)
-  const [items, setItems] = useState<LineItem[]>([])
-  const [email, setEmail] = useState('')
+  const [quote, setQuote] = useState(savedFlow?.quote ?? '')
+  const [message, setMessage] = useState(savedFlow?.message ?? '')
+  const [result, setResult] = useState<AnalyzeResult | null>(savedFlow?.result ?? null)
+  const [items, setItems] = useState<LineItem[]>(savedFlow?.items ?? [])
+  const [email, setEmail] = useState(savedFlow?.email ?? '')
   const [busy, setBusy] = useState<'analyze' | 'send' | null>(null)
   const [error, setError] = useState('')
-  const [sent, setSent] = useState<{ id: string; url: string } | null>(null)
-  const [highlightInvoiceId, setHighlightInvoiceId] = useState<string | null>(null)
+  const [sent, setSent] = useState<{ id: string; url: string } | null>(savedFlow?.sent ?? null)
+  const [highlightInvoiceId, setHighlightInvoiceId] = useState<string | null>(savedFlow?.highlightInvoiceId ?? null)
   const [activeLink, setActiveLink] = useState<number | null>(null)
   const sendLock = useRef(false)
   const total = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
@@ -44,6 +73,16 @@ export default function App() {
     document.documentElement.dataset.theme = theme
     try { window.localStorage.setItem('sift.theme', theme) } catch { /* Theme still works for this visit if storage is unavailable. */ }
   }, [theme])
+  useEffect(() => {
+    try {
+      window.localStorage.removeItem('sift.mock.invoices.v1')
+      window.sessionStorage.removeItem('sift.flow-state')
+    } catch { /* Stale demo data is ignored if storage is unavailable. */ }
+  }, [])
+  useEffect(() => {
+    try { window.sessionStorage.setItem(FLOW_STATE_KEY, JSON.stringify({ step, quote, message, result, items, email, sent, highlightInvoiceId })) }
+    catch { /* The current flow still works if session storage is unavailable. */ }
+  }, [step, quote, message, result, items, email, sent, highlightInvoiceId])
   const currency = result?.currency || 'USD'
   const phrases = result?.extraPhrases ?? []
   const linkable = !!result && phrases.length === items.length
@@ -54,6 +93,19 @@ export default function App() {
     setStep(next)
     setError('')
     setActiveLink(null)
+  }
+
+  const startNewRequest = () => {
+    setQuote('')
+    setMessage('')
+    setResult(null)
+    setItems([])
+    setEmail('')
+    setSent(null)
+    setHighlightInvoiceId(null)
+    setError('')
+    setActiveLink(null)
+    go(0)
   }
 
   const runAnalysis = async () => {
@@ -128,7 +180,7 @@ export default function App() {
         <div className="topbar-account">
           <span className="sandbox-pill"><i />Sandbox</span>
           <button className="theme-toggle" type="button" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} aria-pressed={theme === 'dark'} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}<span>{theme === 'dark' ? 'Light' : 'Dark'}</span></button>
-          <div className="profile"><span className="avatar">DF</span><span className="profile-name">Demo Freelancer</span><ChevronDown size={14} /></div>
+          <div className="profile"><span className="avatar">F</span><span className="profile-name">Freelancer</span><ChevronDown size={14} /></div>
         </div>
       </div>
     </header>
@@ -162,10 +214,6 @@ export default function App() {
             {error && <ErrorNotice message={error} onRetry={() => void runAnalysis()} />}
             <div className="card-actions input-actions">
               <div className="input-secondary-actions">
-                <div className="sample-wrap">
-                  <button className="sample-chip" type="button" aria-describedby="sample-preview" onClick={() => { setQuote(demoQuote); setMessage(demoMessage); setError('') }}>Try a sample</button>
-                  <div className="sample-preview" id="sample-preview" role="tooltip"><span>Quote: Brand identity and landing page for $1,200.</span><span>New ask: Three launch graphics and another revision.</span></div>
-                </div>
                 <button className="text-button view-invoices-button" type="button" onClick={() => go(3)}><FileText size={15} />View invoices</button>
               </div>
               <button className="primary-button" onClick={runAnalysis} disabled={!!busy} type="button">{busy === 'analyze' ? 'Checking…' : <>Sift this request <ArrowRight size={16} /></>}</button>
@@ -213,7 +261,7 @@ export default function App() {
               <div className="invoice-link"><div><span>Payment link</span><a href={sent.url} target="_blank" rel="noreferrer">{sent.url}</a></div><a className="open-link" href={sent.url} target="_blank" rel="noreferrer" aria-label="Open payment link"><ExternalLink size={17} /></a></div>
               <span className="invoice-id">Invoice number · {sent.id}</span>
               <button className="primary-button dashboard-link-button" type="button" onClick={() => { setHighlightInvoiceId(sent.id); go(3) }}>View in dashboard <ArrowRight size={16} /></button>
-              <button className="secondary-button" type="button" onClick={() => { setSent(null); setResult(null); setItems([]); setQuote(''); setMessage(''); setEmail(''); go(0) }}>Create another <ArrowRight size={16} /></button>
+              <button className="secondary-button" type="button" onClick={startNewRequest}>Create another <ArrowRight size={16} /></button>
             </div> : <>
               <div className="invoice-preview">
                 <div className="invoice-preview-head"><div><Logo className="preview-logo" animate={false} /><p className="invoice-type">{invoiceDraftType === 'change_order' ? 'Change order' : 'Invoice'}</p></div><span className="draft-pill"><span />Draft</span></div>
@@ -232,7 +280,7 @@ export default function App() {
             </>}
           </div>}
 
-          {step === 3 && <InvoicesDashboard highlightInvoiceId={highlightInvoiceId} onNewInvoice={() => go(0)} />}
+          {step === 3 && <InvoicesDashboard highlightInvoiceId={highlightInvoiceId} onNewRequest={startNewRequest} />}
         </motion.section>
       </AnimatePresence>
       <footer>Sift · Payments are simulated in the PayPal sandbox.</footer>

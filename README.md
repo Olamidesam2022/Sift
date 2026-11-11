@@ -1,6 +1,6 @@
 # Sift
 
-Sift compares a client’s new request with the agreed quote, drafts an invoice or change order, and prepares a PayPal payment link. The app uses mock data by default.
+Sift compares a client's new request with the agreed quote, drafts an invoice or change order, and prepares a PayPal sandbox payment link. The app uses the live backend; it has no mock API or seeded invoice data.
 
 ## Run locally
 
@@ -11,7 +11,13 @@ npm install
 npm run dev
 ```
 
-Copy `.env.example` to `.env.local` to change the API settings. With `VITE_USE_MOCK=true`, no backend is needed.
+Set the backend URL in `.env.local` before starting Vite:
+
+```env
+VITE_API_BASE_URL=https://sft-backend-5v79.onrender.com
+```
+
+The frontend calls `/api/analyze`, `/api/invoices`, `/api/invoices/:id`, and `/api/invoices/:id/payment-plan`. The backend must allow cross-origin requests from the deployed site when the API uses a different host. Invoice creation and payment plans use the PayPal sandbox.
 
 ## Build
 
@@ -22,26 +28,12 @@ npm run preview
 
 Vite writes the static site to `dist/`.
 
-## Mock mode and real backend
+## Deploy to Vercel
 
-The mock API is enabled by default. Mock invoices are stored in browser local storage and seeded with four examples.
+Connect this repository as a Vite project and set:
 
-To connect a backend, set these Vite environment variables before building:
+- **Build command:** `npm run build`
+- **Output directory:** `dist`
+- **Environment variable:** `VITE_API_BASE_URL=https://sft-backend-5v79.onrender.com`
 
-```env
-VITE_USE_MOCK=false
-VITE_API_BASE_URL=https://your-api.example.com
-```
-
-The client requests `/api/analyze`, `/api/invoices`, and `/api/invoices/:id` from the configured base URL. The backend must allow cross-origin requests from the deployed site when the API uses a different host. See `.env.example` for the mock defaults. Since Vite embeds `VITE_` variables at build time, update the values and redeploy after changing them.
-
-## Deploy to Render
-
-Create a **Static Site** connected to this repository and set:
-
-- **Build Command:** `npm install && npm run build`
-- **Publish Directory:** `dist`
-- **Environment:** `VITE_USE_MOCK=true` for the demo, or `VITE_USE_MOCK=false` and `VITE_API_BASE_URL` for a backend build.
-
-For client-side refreshes, add a Render rewrite rule with source `/*`, destination `/index.html`, and action **Rewrite**. `public/_redirects` is also included for static hosts that support that convention.
-# Sift
+Vite embeds `VITE_` variables at build time, so redeploy after changing the backend URL.

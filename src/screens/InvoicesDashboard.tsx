@@ -1,9 +1,9 @@
 ﻿import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'framer-motion'
 import { createPortal } from 'react-dom'
-import { AlertCircle, ArrowRight, Check, ChevronDown, Copy, RefreshCw, X } from 'lucide-react'
+import { AlertCircle, ArrowRight, Check, Copy, Plus, RefreshCw, X } from 'lucide-react'
 import type { MouseEvent } from 'react'
-import { createPaymentPlan, getInvoice, listInvoices, markMockInvoicePaid, resetMockInvoices, USE_MOCK } from '../api'
+import { createPaymentPlan, getInvoice, listInvoices } from '../api'
 import type { InvoiceStatus, InvoiceSummary } from '../api/types'
 import AnimatedNumber, { formatCurrency } from '../components/AnimatedNumber'
 
@@ -100,9 +100,9 @@ function DrawerSkeleton() {
   return <div className="drawer-skeleton" aria-label="Loading invoice details"><SkeletonBlock className="sk-drawer-title" /><SkeletonBlock className="sk-drawer-amount" /><SkeletonBlock className="sk-drawer-row" /><SkeletonBlock className="sk-drawer-row" /><SkeletonBlock className="sk-drawer-link" /></div>
 }
 
-type Props = { highlightInvoiceId?: string | null; onNewInvoice: () => void }
+type Props = { highlightInvoiceId?: string | null; onNewRequest: () => void }
 
-export default function InvoicesDashboard({ highlightInvoiceId, onNewInvoice }: Props) {
+export default function InvoicesDashboard({ highlightInvoiceId, onNewRequest }: Props) {
   const reduceMotion = useReducedMotion()
   const [invoices, setInvoices] = useState<InvoiceSummary[]>([])
   const [loading, setLoading] = useState(true)
@@ -119,8 +119,6 @@ export default function InvoicesDashboard({ highlightInvoiceId, onNewInvoice }: 
   const [detailError, setDetailError] = useState(false)
   const [copied, setCopied] = useState(false)
   const [copyError, setCopyError] = useState(false)
-  const [demoOpen, setDemoOpen] = useState(false)
-  const [demoMessage, setDemoMessage] = useState('')
   const [toast, setToast] = useState('')
   const [planPicker, setPlanPicker] = useState(false)
   const [planInstallments, setPlanInstallments] = useState<2 | 3>(2)
@@ -316,18 +314,6 @@ export default function InvoicesDashboard({ highlightInvoiceId, onNewInvoice }: 
       copyTimer.current = window.setTimeout(() => setCopied(false), 1800)
     } catch { setCopyError(true) }
   }
-  const markSelectedPaid = () => {
-    if (!selectedId) { setDemoMessage('Select an invoice row first.'); return }
-    const selected = invoices.find((invoice) => invoice.invoiceId === selectedId)
-    if (!selected) { setDemoMessage('That invoice is no longer in the list.'); return }
-    if (selected.status === 'PAID') { setDemoMessage('This invoice is already paid.'); return }
-    if (markMockInvoicePaid(selectedId)) {
-      setDemoMessage('Marked paid. Checking for the update…')
-      void refreshInvoices()
-    }
-    else setDemoMessage('Could not update that invoice. Try again.')
-  }
-
   const suggestPaymentPlan = async () => {
     if (!detail || planBusy) return
     setPlanBusy(true)
@@ -347,22 +333,6 @@ export default function InvoicesDashboard({ highlightInvoiceId, onNewInvoice }: 
     } catch {
       setPlanError('Pay in parts isn’t available right now')
     } finally { setPlanBusy(false) }
-  }
-
-  const resetDemo = () => {
-    const seeded = resetMockInvoices()
-    offeredPlanIds.current.clear()
-    setInvoices(seeded)
-    setDetail(null)
-    setSelectedId(null)
-    setPlanPicker(false)
-    setPlanConfirmation(null)
-    statuses.current = new Map(seeded.map((invoice) => [invoice.invoiceId, invoice.status]))
-    hasBaseline.current = true
-    setLastUpdated(Date.now())
-    setToast('Demo data reset')
-    window.clearTimeout(toastTimer.current)
-    toastTimer.current = window.setTimeout(() => setToast(''), 2800)
   }
 
   const totals = useMemo(() => {
@@ -399,14 +369,10 @@ export default function InvoicesDashboard({ highlightInvoiceId, onNewInvoice }: 
 
   return <div className="dashboard-screen">
     <div className="dashboard-toolbar">
-      <div className="live-meta"><span className={`data-mode-badge ${USE_MOCK ? 'mock' : 'live'}`}>{USE_MOCK ? 'Demo data' : 'Live (PayPal sandbox)'}</span><span>{updatedText}</span>{reconnecting && <span className="reconnecting"><RefreshCw size={12} />Reconnecting…</span>}</div>
-      {USE_MOCK && <div className="demo-control-wrap">
-        <button className="reset-demo-button" type="button" onClick={resetDemo}>Reset demo</button>
-        <button className="demo-controls-button" type="button" aria-expanded={demoOpen} aria-controls="demo-controls-panel" onClick={() => { setDemoOpen((open) => !open); setDemoMessage('') }}>Demo controls<ChevronDown size={13} /></button>
-        <AnimatePresence>{demoOpen && <motion.div id="demo-controls-panel" className="demo-controls-panel" initial={reduceMotion ? false : { opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -4 }} transition={{ duration: reduceMotion ? 0 : .18 }}>
-          <strong>Demo controls</strong><p>Select an invoice row, then mark it paid to preview live updates.</p><button type="button" onClick={markSelectedPaid} disabled={!selectedId || invoices.find((invoice) => invoice.invoiceId === selectedId)?.status === 'PAID'}>Mark selected invoice as paid</button>{demoMessage && <span role="status">{demoMessage}</span>}
-        </motion.div>}</AnimatePresence>
-      </div>}
+      <div className="live-meta"><span className="data-mode-badge live">Live (PayPal sandbox)</span><span>{updatedText}</span>{reconnecting && <span className="reconnecting"><RefreshCw size={12} />Reconnecting…</span>}</div>
+      <div className="dashboard-toolbar-actions">
+        <button className="small-button dashboard-request-button" type="button" onClick={onNewRequest}><Plus size={15} /><span>New request</span></button>
+      </div>
     </div>
 
     {loading && !invoices.length ? <DashboardSkeleton /> : initialError && !invoices.length ? <div className="dashboard-error" role="alert"><AlertCircle size={18} /><div><strong>Invoices couldn’t load.</strong><p>Check your connection and try again.</p></div><button className="small-button" type="button" onClick={retryList}>Retry</button></div> : <>
@@ -417,7 +383,7 @@ export default function InvoicesDashboard({ highlightInvoiceId, onNewInvoice }: 
         {invoices.some((invoice) => invoice.draftType !== undefined) && <SummaryCard title="Extra work billed" tone="extra" invoices={totals.extra} amount={(invoice) => invoice.total} />}
       </div>
       <div className="invoice-list-tools"><div className="filter-chips" role="group" aria-label="Filter invoices">{filters.map((name) => <button key={name} className={`filter-chip ${filter === name ? 'active' : ''}`} type="button" aria-pressed={filter === name} onClick={() => setFilter(name)}>{name}<span><AnimatedNumber value={counts[name]} format="number" /></span></button>)}</div><span className="invoice-total-count">{invoices.length} {invoices.length === 1 ? 'invoice' : 'invoices'}</span></div>
-      {invoices.length === 0 ? <div className="invoice-empty"><strong>No invoices yet</strong><p>Invoices you send will show up here.</p><button className="primary-button" type="button" onClick={onNewInvoice}>Create an invoice <ArrowRight size={15} /></button></div> : visibleInvoices.length === 0 ? <div className="filter-empty">No {filter.toLowerCase()} invoices.</div> : <div className="invoice-list-pager">
+      {invoices.length === 0 ? <div className="invoice-empty"><strong>No invoices yet</strong><p>Invoices you send will show up here.</p><button className="primary-button" type="button" onClick={onNewRequest}>Create a request <ArrowRight size={15} /></button></div> : visibleInvoices.length === 0 ? <div className="filter-empty">No {filter.toLowerCase()} invoices.</div> : <div className="invoice-list-pager">
         <div className="invoice-table" ref={tableRef}>
           <div className="invoice-table-head"><span>Client</span><span>Amount</span><span>Due date</span><span>Status</span><span /></div>
           <LayoutGroup><div className="invoice-rows"><AnimatePresence initial={false}>{pageInvoices.map((invoice, index) => <InvoiceRow key={invoice.invoiceId} invoice={invoice} index={index} changed={flashingIds.has(invoice.invoiceId)} fresh={invoice.invoiceId === freshId} onClick={(event) => void openDetail(invoice, event.currentTarget)} />)}</AnimatePresence></div></LayoutGroup>

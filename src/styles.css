@@ -866,6 +866,20 @@ footer{width:100%;max-width:960px;margin:24px auto 0;padding:0 24px 24px;color:v
   .mobile-row-meta{min-width:0}
   .mobile-row-details>.status-pill{justify-self:start}
 }
+
+.dashboard-toolbar-actions{display:flex;min-width:0;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto}
+.dashboard-toolbar-actions .dashboard-request-button{position:relative;isolation:isolate;display:inline-flex;min-height:44px;align-items:center;justify-content:center;gap:7px;white-space:nowrap;font-weight:650;color:var(--emerald);border-color:var(--border);background:var(--surface);transition:transform .16s ease,box-shadow .16s ease}
+.dashboard-toolbar-actions .dashboard-request-button::before{position:absolute;z-index:0;inset:0;border-radius:inherit;background:var(--emerald);content:"";transform:scaleX(0);transform-origin:left;transition:transform .24s ease}
+.dashboard-toolbar-actions .dashboard-request-button>svg,.dashboard-toolbar-actions .dashboard-request-button>span{position:relative;z-index:1}
+.dashboard-toolbar-actions .dashboard-request-button:hover{color:#fff;border-color:transparent;background:var(--surface);transform:translateY(-1px);box-shadow:0 4px 10px rgba(25,46,33,.16)}
+.dashboard-toolbar-actions .dashboard-request-button:hover::before{transform:scaleX(1)}
+.dashboard-toolbar-actions .dashboard-request-button:active{transform:translateY(0) scale(.98)}
+@media(max-width:480px){
+  .dashboard-toolbar-actions{width:100%;flex-wrap:wrap;gap:8px}
+  .dashboard-toolbar-actions .dashboard-request-button{min-height:44px}
+  .dashboard-toolbar-actions .demo-control-wrap{margin-left:auto}
+}
+@media(prefers-reduced-motion:reduce){.dashboard-toolbar-actions .dashboard-request-button,.dashboard-toolbar-actions .dashboard-request-button::before{transition:none}.dashboard-toolbar-actions .dashboard-request-button:hover,.dashboard-toolbar-actions .dashboard-request-button:active{transform:none}}
 @media(max-width:767px){
   .filter-chips{min-width:0;max-width:100%;flex-wrap:wrap;overflow:visible}
   .filter-chip{flex:0 0 auto}
