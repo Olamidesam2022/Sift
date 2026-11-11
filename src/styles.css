@@ -607,6 +607,7 @@ body{min-width:320px;overflow-x:hidden;font-size:14px;color:var(--text-primary);
 .form-grid{gap:24px;align-items:start}
 .field-label{font-size:14px;font-weight:600;line-height:1.4;color:var(--text-primary)}
 .field-label>span{font-size:12px;line-height:1.5;color:var(--text-muted)}
+.field-label>.text-area{display:block;margin-top:8px}
 .text-area{height:176px;min-height:176px;resize:vertical;padding:16px;border:1px solid var(--border);border-radius:var(--radius-control);font-size:14px;line-height:1.5}
 .email-input{height:48px;min-height:48px;margin-top:8px;padding:0 16px;border:1px solid var(--border);border-radius:var(--radius-control);font-size:14px}
 .text-area:focus,.email-input:focus{border-color:var(--emerald);box-shadow:0 0 0 3px rgba(23,107,75,.14)}

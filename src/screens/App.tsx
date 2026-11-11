@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import confetti from 'canvas-confetti'
-import { ArrowLeft, ArrowRight, Check, ChevronDown, Clock3, ExternalLink, FileText, Moon, Plus, Send, Sun, Trash2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, Clock3, ExternalLink, FileText, Moon, Plus, Send, Sun, Trash2 } from 'lucide-react'
 import { analyze, createInvoice } from '../api'
 import type { AnalyzeResult, LineItem } from '../api/types'
 import AnimatedNumber, { formatCurrency } from '../components/AnimatedNumber'
@@ -180,7 +180,7 @@ export default function App() {
         <div className="topbar-account">
           <span className="sandbox-pill"><i />Sandbox</span>
           <button className="theme-toggle" type="button" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} aria-pressed={theme === 'dark'} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}<span>{theme === 'dark' ? 'Light' : 'Dark'}</span></button>
-          <div className="profile"><span className="avatar">F</span><span className="profile-name">Freelancer</span><ChevronDown size={14} /></div>
+          <div className="profile"><span className="avatar">F</span><span className="profile-name">Freelancer</span></div>
         </div>
       </div>
     </header>
